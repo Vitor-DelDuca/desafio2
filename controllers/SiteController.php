@@ -10,6 +10,17 @@ use yii\filters\VerbFilter;
 use app\models\LoginForm;
 use app\models\ContactForm;
 
+class stdObject {
+    public function construct(array $arguments = array()) {
+        if (!empty($arguments)) {
+            foreach ($arguments as $property => $argument) {
+                $this->{$property} = $argument;
+            }
+        }
+    }
+  
+  }
+
 class SiteController extends Controller
 {
     /**
@@ -61,7 +72,38 @@ class SiteController extends Controller
      */
     public function actionIndex()
     {
-        return $this->render('index');
+        // Create a stream
+        $opts = array(
+            'http'=>array(
+                'method'=>"GET",
+                'header'=>"Accept-language: en\r\n" .
+                "Cookie: foo=bar\r\n"
+                )
+            );
+            
+            $context = stream_context_create($opts);
+            $ml_id = isset($_GET['ml-id'])? $_GET['ml-id']:"MLB1381222244";
+            
+            // Open the file using the HTTP headers set above
+          $file = file_get_contents("https://api.mercadolibre.com/items/".$ml_id, false, $context);
+          $fileEncoded = json_decode($file);
+          
+          
+          $obj = new stdObject();
+          $obj->id = $fileEncoded->id;
+          $obj->title = $fileEncoded->title;
+          $obj->category_id = $fileEncoded->category_id;
+          $obj->price = $fileEncoded->price;
+          $obj->available_quantity = $fileEncoded->available_quantity;
+          $obj->thumbnail = $fileEncoded->thumbnail;
+          $obj->permalink = $fileEncoded->permalink;
+
+          $estilo = "<h1>$fileEncoded->title</h1>
+          <img src='$fileEncoded->thumbnail'></img>
+                        ";
+          
+        return $this->render('index', ['obj'=>$obj]);
+
     }
 
     /**
